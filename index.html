@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Product Recommendations</title>
+    <style>
+        label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        input[type="text"], input[type="number"], input[type="submit"] {
+            margin-bottom: 10px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Product Recommendations</h1>
+
+    <form id="recommendForm" onsubmit="getProductRecommendations(event)">
+        <label for="product_name">Product Name:</label>
+        <input type="text" id="product_name" name="product_name" required>
+
+        <label for="num_products">Number of Similar Products:</label>
+        <input type="number" id="num_products" name="n" min="1" max="10" value="5">
+
+        <input type="submit" value="Get Recommendations">
+    </form>
+
+    <div id="similarProducts">
+        <!-- Similar products will be displayed here -->
+    </div>
+
+    <script>
+        async function getProductRecommendations(event) {
+            event.preventDefault();
+
+            const product = document.getElementById('product_name').value;
+            const numProducts = document.getElementById('num_products').value;
+
+            const requestData = {
+                'product_name': product,
+                'n': numProducts
+            };
+
+            try {
+                const response = await fetch('/recommend', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                if (response.ok) {
+                    const similarProducts = await response.json();
+                    console.log(similarProducts); // Log the response for debugging
+
+                    const similarProductsDiv = document.getElementById('similarProducts');
+                    similarProductsDiv.innerHTML = '';
+
+                    const ul = document.createElement('ul');
+                    similarProductsDiv.appendChild(ul);
+
+                    for (let i = 0; i < similarProducts.length; i++) {
+                        const li = document.createElement('li');
+                        li.textContent = similarProducts[i];
+                        ul.appendChild(li);
+                    }
+                } else {
+                    console.error('Error:', response.status);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+    </script>
+</body>
+</html>
