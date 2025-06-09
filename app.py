@@ -23,20 +23,30 @@ cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
 
 # Function to get top n similar products
 def get_similar_products(product_name, n=5):
+    """Return the top ``n`` products similar to ``product_name``.
+
+    If ``product_name`` is not present in ``df`` an empty list is returned
+    instead of raising an ``IndexError``.
+    """
+
+    matches = df[df['Product_Name'] == product_name]
+    if matches.empty:
+        return []
+
     # Get the index of the product
-    index = df[df['Product_Name'] == product_name].index[0]
-    
+    index = matches.index[0]
+
     # Get the similarity scores of the product with all other products
     similarity_scores = list(enumerate(cosine_sim[index]))
-    
+
     # Sort the products based on similarity scores
     similarity_scores = sorted(similarity_scores, key=lambda x: x[1], reverse=True)
-    
+
     # Get the indices of the top n similar products
-    top_indices = [i[0] for i in similarity_scores[1:n+1]]
-    
-    # Return the top n similar products
-    return df.iloc[top_indices]['Product_Name']
+    top_indices = [i[0] for i in similarity_scores[1:n + 1]]
+
+    # Return the top n similar products as a list
+    return df.iloc[top_indices]['Product_Name'].tolist()
 
 @app.route('/recommend', methods=['POST'])
 def recommend():
@@ -49,9 +59,12 @@ def recommend():
     
     # Get the similar products
     similar_products = get_similar_products(product_name, n)
-    
+
+    if not similar_products:
+        return jsonify({'error': 'Product not found'}), 404
+
     # Return the recommended similar products as a JSON response
-    return jsonify(similar_products.tolist())
+    return jsonify(similar_products)
 
 if __name__ == '__main__':
     app.run(debug=True)
